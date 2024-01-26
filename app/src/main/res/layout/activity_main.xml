@@ -9,19 +9,31 @@
         android:id="@+id/startScanButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Start Scan"/>
+        android:text="@string/conn_btn"/>
+
+    <Button
+        android:id="@+id/disconnectButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/disconnect_btn" />
+
 
     <ScrollView
         android:id="@+id/scrollView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:layout_weight="1">
 
         <TextView
             android:id="@+id/bluetoothDataTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Bluetooth Data Here" />
+
+            android:textIsSelectable="true"
+            android:focusableInTouchMode="true"
+            android:longClickable="true"
+
+            android:text="@string/bt_logs" />
     </ScrollView>
 
 </LinearLayout>
