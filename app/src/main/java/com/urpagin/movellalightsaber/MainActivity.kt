@@ -25,6 +25,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.navigation.findNavController
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.UUID
@@ -42,6 +43,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var bluetoothAdapter: BluetoothAdapter
     private var bluetoothGatt: BluetoothGatt? = null
     private lateinit var bluetoothDataTextView: TextView
+
+    override fun onSupportNavigateUp(): Boolean {
+        val navController = findNavController(R.id.main_fragment)
+        return navController.navigateUp() || super.onSupportNavigateUp()
+    }
 
 
 
@@ -122,6 +128,8 @@ class MainActivity : AppCompatActivity() {
 
 
 
+
+
         // acccess bg location
         // Initialize MediaPlayer and set the audio resource
         mediaPlayer = MediaPlayer.create(this, R.raw.lightsaber)
@@ -193,6 +201,7 @@ class MainActivity : AppCompatActivity() {
                 startBLEScan()
             }
         }
+
 
 
     }
