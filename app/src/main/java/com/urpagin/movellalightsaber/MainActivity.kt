@@ -16,9 +16,10 @@ import android.media.MediaPlayer
 import android.media.PlaybackParams
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
+import android.util.Log
+import android.view.View
 import android.widget.Button
+import android.widget.EditText
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -80,54 +81,36 @@ class MainActivity : AppCompatActivity() {
 
 
 
+    private fun unpairDevice(device: BluetoothDevice) {
+        try {
+            // Use an empty array to indicate no parameters for the method
+            val method = device.javaClass.getMethod("removeBond", *arrayOf<Class<*>>())
+            method.invoke(device)
+            runOnUiThread { appendToTextView("Successfully initiated unpairing for ${device.address}") }
+        } catch (e: Exception) {
+            Log.e("unpairDevice", "Exception when trying to unpair ${device.address}", e)
+            runOnUiThread { appendToTextView("[[unpairDevice]] - Exception when trying to unpair ${device.address} - ${e.message}") }
+        }
+    }
+
+
 
     private fun disconnectFromDevice() {
-        if (bluetoothGatt != null) {
-            if (ActivityCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.BLUETOOTH_CONNECT
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissions
-                // here to request the missing permissions, and then overriding
-                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                //                                          int[] grantResults)
-                // to handle the case where the user grants the permission. See the documentation
-                // for ActivityCompat#requestPermissions for more details.
+        bluetoothGatt?.device?.let { device ->
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                // Request necessary permissions or handle the lack of them
                 return
             }
+
             bluetoothGatt?.disconnect()
-            bluetoothGatt?.close()  // Optionally, you can close the GATT client
+            bluetoothGatt?.close()
             bluetoothGatt = null
-            runOnUiThread { appendToTextView("\n\n\n\nDisconnected from device") }
+            runOnUiThread { appendToTextView("Disconnected from device") }
+
+            // Attempt to unpair the device
+            unpairDevice(device)
+            runOnUiThread { appendToTextView("Unpaired from device") }
         }
-    }
-
-    private val handler = Handler(Looper.getMainLooper())
-    private val heartbeatInterval: Long = 10000 // 10 seconds
-
-    private val heartbeatRunnable = object : Runnable {
-        override fun run() {
-            sendHeartbeat()
-            handler.postDelayed(this, heartbeatInterval)
-        }
-    }
-
-
-    private fun sendHeartbeat() {
-        //val serviceUuid = UUID.fromString("YOUR_SERVICE_UUID")
-        //val characteristicUuid = UUID.fromString("YOUR_CHARACTERISTIC_UUID_FOR_HEARTBEAT")
-        val heartbeatCommand: ByteArray = byteArrayOf(0x01, 0x01, 0x06) // Define your heartbeat command
-//
-        //val service = bluetoothGatt?.getService(serviceUuid)
-        //val characteristic = service?.getCharacteristic(characteristicUuid)
-
-        val measurementCharacteristic = bluetoothGatt?.getService(UUID.fromString("15172000-4947-11e9-8646-d663bd873d93"))
-            ?.getCharacteristic(UUID.fromString("15172001-4947-11e9-8646-d663bd873d93"))
-
-        measurementCharacteristic?.value = heartbeatCommand
-        bluetoothGatt?.writeCharacteristic(measurementCharacteristic)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -141,13 +124,13 @@ class MainActivity : AppCompatActivity() {
 
         // acccess bg location
         // Initialize MediaPlayer and set the audio resource
-        val mediaPlayerInit = MediaPlayer.create(this, R.raw.vsauce)
+        mediaPlayer = MediaPlayer.create(this, R.raw.lightsaber)
         // Starts the audio
-        mediaPlayerInit.start()
+        mediaPlayer.start()
         // Waits for the audio to complete, then cleans
-        mediaPlayerInit.setOnCompletionListener {
-            mediaPlayerInit.release()
-        }
+        //mediaPlayerInit.setOnCompletionListener {
+        //    mediaPlayerInit.release()
+        //}
 
 
 
@@ -169,6 +152,28 @@ class MainActivity : AppCompatActivity() {
 
         bluetoothDataTextView = findViewById(R.id.bluetoothDataTextView)
 
+        // Assuming this code is within an Activity or Fragment where the EditText is located
+
+        // Step 1: Access the EditText
+        val soundTriggerThreshold = findViewById<EditText>(R.id.triggerThresholdNumber)
+
+        // Step 2: Extract the Text
+        val textValue = soundTriggerThreshold.text.toString()
+
+        // Step 3: Convert to Integer
+        val intValue = textValue.toIntOrNull()  // Safe conversion to Int, returns null if conversion fails
+
+        // Optional: Check if the conversion was successful
+        if (intValue != null) {
+            // Use the integer value as needed
+            Log.d("YourActivity", "The integer value is: $intValue")
+        } else {
+            // Handle the case where the text is not a valid integer
+            Log.d("YourActivity", "The entered text is not a valid integer")
+        }
+
+
+
         val disconnectButton: Button = findViewById(R.id.disconnectButton)
         disconnectButton.setOnClickListener {
             disconnectFromDevice()
@@ -188,13 +193,6 @@ class MainActivity : AppCompatActivity() {
                 startBLEScan()
             }
         }
-
-        // To start the periodic heartbeat
-        handler.post(heartbeatRunnable)
-
-// To stop the heartbeat when no longer needed
-        handler.removeCallbacks(heartbeatRunnable)
-
 
 
     }
@@ -344,6 +342,8 @@ class MainActivity : AppCompatActivity() {
                 gatt?.discoverServices()
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 runOnUiThread { appendToTextView("Disconnected from GATT server.") }
+                runOnUiThread { appendToTextView("\n\n--ATTEMPT TO RECONNECT--\n\n") }
+                connectToKnownDevice() // Attempt reconnection
             }
         }
 
@@ -388,12 +388,21 @@ class MainActivity : AppCompatActivity() {
         override fun onCharacteristicChanged(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, value: ByteArray) {
             if (characteristic.uuid == SHORT_PAYLOAD_CHARACTERISTIC_UUID) {
                 val sensorData: SensorData = encodeFreeAcceleration(value)
-                val soundThreshold: Int = 20
+                val soundThreshold: Int = getIntSoundTriggerThreshold(R.id.triggerThresholdNumber)
                 if (abs(sensorData.x) > soundThreshold || abs(sensorData.y) > soundThreshold || abs(sensorData.z) > soundThreshold) {
                     // Start playing the audio
-                    playSoundWithPitchChange(R.raw.vsauce)
+                    //playSoundWithPitchChange(R.raw.vsauce)
+                    mediaPlayer.start()
                 }
             }
+        }
+
+
+
+        private fun getIntSoundTriggerThreshold(editTextId: Int): Int {
+            val editText = findViewById<EditText>(editTextId)
+            val textValue = editText.text.toString()
+            return textValue.toInt()
         }
 
 

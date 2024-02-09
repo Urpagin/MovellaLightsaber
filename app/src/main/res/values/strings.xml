@@ -1,6 +1,9 @@
 <resources>
     <string name="app_name">Movella DOT - Lightsabers</string>
-    <string name="bt_logs">(Bluetooth Data Here)\n</string>
+    <string name="bt_logs">(Bluetooth Logs)\n</string>
     <string name="conn_btn">Connect DOT</string>
-    <string name="disconnect_btn">Disconnect</string>
+    <string name="disconnect_btn">Disconnect DOT</string>
+    <string name="sound_trigger_threshold">Sound Trigger Threshold:</string>
+    <string name="hint_sound_trigger_threshold">15</string>
+    <string name="default_sound_trigger_threshold">15</string>
 </resources>
