@@ -2,16 +2,11 @@
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main_nav"
-    app:startDestination="@id/home2">
+    android:id="@+id/main_nav">
 
-    <fragment
-        android:id="@+id/home2"
-        android:name="com.urpagin.movellalightsaber.Home"
-        android:label="Home"
-        tools:layout="@layout/fragment_home" />
     <fragment
         android:id="@+id/settingsFragment"
         android:name="com.urpagin.movellalightsaber.SettingsFragment"
         android:label="SettingsFragment" />
+    <!-- The activity tag is removed, and navigation will be managed within MainActivity through fragments -->
 </navigation>
