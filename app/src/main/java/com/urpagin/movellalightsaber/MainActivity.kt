@@ -7,6 +7,8 @@ import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
+import androidx.navigation.findNavController
+
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.bluetooth.le.ScanSettings
@@ -17,7 +19,6 @@ import android.media.PlaybackParams
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ScrollView
@@ -34,7 +35,8 @@ import kotlin.system.exitProcess
 
 const val DEVICE_ADDRESS = "D4:22:CD:00:50:50"
 val MEASUREMENT_CHARACTERISTIC_UUID: UUID = UUID.fromString("15172001-4947-11e9-8646-d663bd873d93")
-val SHORT_PAYLOAD_CHARACTERISTIC_UUID: UUID = UUID.fromString("15172004-4947-11e9-8646-d663bd873d93")
+val SHORT_PAYLOAD_CHARACTERISTIC_UUID: UUID =
+    UUID.fromString("15172004-4947-11e9-8646-d663bd873d93")
 
 
 class MainActivity : AppCompatActivity() {
@@ -44,8 +46,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var bluetoothDataTextView: TextView
 
 
-
-    private fun is_bluetooth_ready(): Boolean {
+    private fun isBluetoothReady(): Boolean {
         val bluetoothManager: BluetoothManager = getSystemService(BluetoothManager::class.java)
         val bluetoothAdapter: BluetoothAdapter = bluetoothManager.adapter ?: return false
 
@@ -61,7 +62,8 @@ class MainActivity : AppCompatActivity() {
         val mediaPlayer = MediaPlayer.create(this, resourceId)
         val start = -0.3
         val end = 0.3
-        val randomValue: Float = (start + Random.nextFloat() * (end - start)).toFloat() // Generates a random double between 1.0 and 10.0
+        val randomValue: Float =
+            (start + Random.nextFloat() * (end - start)).toFloat() // Generates a random double between 1.0 and 10.0
 
         pitch += randomValue
         val playbackParams = PlaybackParams()
@@ -76,9 +78,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Adjust the pitch for the next playback
-         // Adjust this value as needed
+        // Adjust this value as needed
     }
-
 
 
     private fun unpairDevice(device: BluetoothDevice) {
@@ -94,10 +95,13 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-
     private fun disconnectFromDevice() {
         bluetoothGatt?.device?.let { device ->
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.BLUETOOTH_CONNECT
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
                 // Request necessary permissions or handle the lack of them
                 return
             }
@@ -115,11 +119,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (!is_bluetooth_ready()) {
+        if (!isBluetoothReady()) {
             moveTaskToBack(true)
             exitProcess(-1)
         }
-
 
 
         // acccess bg location
@@ -133,15 +136,18 @@ class MainActivity : AppCompatActivity() {
         //}
 
 
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            if (ContextCompat.checkSelfPermission(baseContext,
-                    Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(
+                    baseContext,
+                    Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                )
+                != PackageManager.PERMISSION_GRANTED
+            ) {
                 ActivityCompat.requestPermissions(
                     this,
                     arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
-                    PERMISSION_CODE)
+                    PERMISSION_CODE
+                )
             }
         }
 
@@ -161,7 +167,8 @@ class MainActivity : AppCompatActivity() {
         val textValue = soundTriggerThreshold.text.toString()
 
         // Step 3: Convert to Integer
-        val intValue = textValue.toIntOrNull()  // Safe conversion to Int, returns null if conversion fails
+        val intValue =
+            textValue.toIntOrNull()  // Safe conversion to Int, returns null if conversion fails
 
         // Optional: Check if the conversion was successful
         if (intValue != null) {
@@ -171,7 +178,6 @@ class MainActivity : AppCompatActivity() {
             // Handle the case where the text is not a valid integer
             Log.d("YourActivity", "The entered text is not a valid integer")
         }
-
 
 
         val disconnectButton: Button = findViewById(R.id.disconnectButton)
@@ -193,6 +199,14 @@ class MainActivity : AppCompatActivity() {
                 startBLEScan()
             }
         }
+
+        val settingsButton: Button = findViewById(R.id.settingsButton)
+        settingsButton.setOnClickListener {
+            Log.d("MainActivity", "Settings button clicked")
+            findNavController(R.id.nav_host_fragment).navigate(R.id.settingsFragment)
+        }
+
+
 
 
     }
@@ -221,7 +235,11 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
         when (requestCode) {
             REQUEST_ALL_PERMISSIONS -> {
                 if (hasAllRequiredPermissions()) {
@@ -290,28 +308,7 @@ class MainActivity : AppCompatActivity() {
         appendToTextView("BLE scan started...")
 
 
-
     }
-
-
-    //private val scanCallback = object : ScanCallback() {
-    //    //@SuppressLint("MissingPermission")
-    //    override fun onScanResult(callbackType: Int, result: ScanResult) {
-    //        val deviceAddress = result.device.address
-    //        val deviceName = result.device.name ?: "Unknown"
-    //        appendToTextView("Found device: $deviceName, Address: $deviceAddress")
-//
-    //        if (deviceAddress == DEVICE_ADDRESS) {
-    //            bluetoothAdapter.bluetoothLeScanner?.stopScan(this)
-    //            appendToTextView("Target device found: $deviceAddress")
-    //            connectToDevice(result.device)
-    //        }
-    //    }
-//
-    //    override fun onScanFailed(errorCode: Int) {
-    //        appendToTextView("BLE scan failed with error code: $errorCode")
-    //    }
-    //}
 
     private fun connectToKnownDevice() {
         val deviceAddress = "D4:22:CD:00:50:50"
@@ -363,7 +360,6 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-
         private fun findCharacteristicAndEnableNotification(gatt: BluetoothGatt) {
             runOnUiThread { appendToTextView("[[findCharacteristicAndEnableNotification]]") }
 
@@ -385,18 +381,24 @@ class MainActivity : AppCompatActivity() {
 
         }
 
-        override fun onCharacteristicChanged(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, value: ByteArray) {
+        override fun onCharacteristicChanged(
+            gatt: BluetoothGatt,
+            characteristic: BluetoothGattCharacteristic,
+            value: ByteArray
+        ) {
             if (characteristic.uuid == SHORT_PAYLOAD_CHARACTERISTIC_UUID) {
                 val sensorData: SensorData = encodeFreeAcceleration(value)
                 val soundThreshold: Int = getIntSoundTriggerThreshold(R.id.triggerThresholdNumber)
-                if (abs(sensorData.x) > soundThreshold || abs(sensorData.y) > soundThreshold || abs(sensorData.z) > soundThreshold) {
+                if (abs(sensorData.x) > soundThreshold || abs(sensorData.y) > soundThreshold || abs(
+                        sensorData.z
+                    ) > soundThreshold
+                ) {
                     // Start playing the audio
                     //playSoundWithPitchChange(R.raw.vsauce)
                     mediaPlayer.start()
                 }
             }
         }
-
 
 
         private fun getIntSoundTriggerThreshold(editTextId: Int): Int {
@@ -406,13 +408,17 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-
-
-
-        private fun enableCharacteristicNotification(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
+        private fun enableCharacteristicNotification(
+            gatt: BluetoothGatt,
+            characteristic: BluetoothGattCharacteristic
+        ) {
             runOnUiThread { appendToTextView("[[enableCharacteristicNotification]]") }
 
-            if (ActivityCompat.checkSelfPermission(this@MainActivity, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.checkSelfPermission(
+                    this@MainActivity,
+                    Manifest.permission.BLUETOOTH_CONNECT
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
                 runOnUiThread { appendToTextView("Returned!") }
                 return // Handle the permission request
             }
@@ -422,7 +428,8 @@ class MainActivity : AppCompatActivity() {
             }
             runOnUiThread { appendToTextView("Setting the characteristic notification was successful") }
 
-            val descriptor = characteristic.getDescriptor(UUID.fromString("00002902-0000-1000-8000-00805f9b34fb"))
+            val descriptor =
+                characteristic.getDescriptor(UUID.fromString("00002902-0000-1000-8000-00805f9b34fb"))
             if (descriptor == null) {
                 runOnUiThread { appendToTextView("Descriptor is NULL!") }
             }
@@ -433,13 +440,18 @@ class MainActivity : AppCompatActivity() {
             runOnUiThread { appendToTextView("[[enableCharacteristicNotification - END]]") }
         }
 
-        override fun onDescriptorWrite(gatt: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int) {
+        override fun onDescriptorWrite(
+            gatt: BluetoothGatt,
+            descriptor: BluetoothGattDescriptor,
+            status: Int
+        ) {
             super.onDescriptorWrite(gatt, descriptor, status)
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 runOnUiThread { appendToTextView("Descriptor write successful") }
 
-                val measurementCharacteristic = gatt.getService(UUID.fromString("15172000-4947-11e9-8646-d663bd873d93"))
-                    ?.getCharacteristic(UUID.fromString("15172001-4947-11e9-8646-d663bd873d93"))
+                val measurementCharacteristic =
+                    gatt.getService(UUID.fromString("15172000-4947-11e9-8646-d663bd873d93"))
+                        ?.getCharacteristic(UUID.fromString("15172001-4947-11e9-8646-d663bd873d93"))
 
                 if (measurementCharacteristic != null) {
                     val command: ByteArray = byteArrayOf(0x01, 0x01, 0x06)
@@ -456,14 +468,6 @@ class MainActivity : AppCompatActivity() {
                 runOnUiThread { appendToTextView("Descriptor write failed: $status") }
             }
         }
-
-
-
-
-
-
-
-
 
 
         // Implement other callback methods like onCharacteristicRead, onCharacteristicWrite, etc.
@@ -489,100 +493,6 @@ class MainActivity : AppCompatActivity() {
         buffer.position(buffer.position() + 4)
         return sensorData
     }
-
-
-
-
-
-
-    //private fun connectToDevice(device: BluetoothDevice) {
-    //    appendToTextView("connectToDevice")
-    //    if (ActivityCompat.checkSelfPermission(
-    //            this, Manifest.permission.BLUETOOTH_CONNECT
-    //        ) != PackageManager.PERMISSION_GRANTED
-    //    ) {
-    //        // TODO: Consider calling
-    //        //    ActivityCompat#requestPermissions
-    //        // here to request the missing permissions, and then overriding
-    //        //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-    //        //                                          int[] grantResults)
-    //        // to handle the case where the user grants the permission. See the documentation
-    //        // for ActivityCompat#requestPermissions for more details.
-    //        return
-    //    }
-    //
-    //
-    //    bluetoothGatt = device.connectGatt(this, false, object : BluetoothGattCallback() {
-    //        override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
-    //            if (newState == BluetoothProfile.STATE_CONNECTED) {
-    //                if (ActivityCompat.checkSelfPermission(
-    //                        this@MainActivity, Manifest.permission.BLUETOOTH_CONNECT
-    //                    ) != PackageManager.PERMISSION_GRANTED
-    //                ) {
-    //                    // TODO: Consider calling
-    //                    //    ActivityCompat#requestPermissions
-    //                    // here to request the missing permissions, and then overriding
-    //                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-    //                    //                                          int[] grantResults)
-    //                    // to handle the case where the user grants the permission. See the documentation
-    //                    // for ActivityCompat#requestPermissions for more details.
-    //                    return
-    //                }
-    //                gatt.discoverServices()
-    //            }
-    //        }
-//
-    //        override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
-    //            val service =
-    //                gatt.getService(UUID.fromString(SHORT_PAYLOAD_CHARACTERISTIC_UUID.toString()))
-    //            val characteristic =
-    //                service.getCharacteristic(UUID.fromString(SHORT_PAYLOAD_CHARACTERISTIC_UUID.toString()))
-    //            if (ActivityCompat.checkSelfPermission(
-    //                    this@MainActivity, Manifest.permission.BLUETOOTH_CONNECT
-    //                ) != PackageManager.PERMISSION_GRANTED
-    //            ) {
-    //                // TODO: Consider calling
-    //                //    ActivityCompat#requestPermissions
-    //                // here to request the missing permissions, and then overriding
-    //                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-    //                //                                          int[] grantResults)
-    //                // to handle the case where the user grants the permission. See the documentation
-    //                // for ActivityCompat#requestPermissions for more details.
-    //                return
-    //            }
-    //            gatt.setCharacteristicNotification(characteristic, true)
-    //            val descriptor =
-    //                characteristic.getDescriptor(UUID.fromString("00002902-0000-1000-8000-00805f9b34fb"))
-    //            descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-    //            gatt.writeDescriptor(descriptor)
-//
-    //            val measurementCharacteristic =
-    //                service.getCharacteristic(UUID.fromString(MEASUREMENT_CHARACTERISTIC_UUID.toString()))
-    //            val binaryMessage = byteArrayOf(0x01, 0x01, 0x06)
-    //            measurementCharacteristic.setValue(binaryMessage)
-    //            gatt.writeCharacteristic(measurementCharacteristic)
-    //        }
-//
-    //        override fun onCharacteristicChanged(
-    //            gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic
-    //        ) {
-    //            val data = characteristic.value
-    //            val formattedData = encodeFreeAcceleration(data)
-    //            runOnUiThread {
-    //                bluetoothDataTextView.text = formattedData
-    //            }
-    //        }
-    //    })
-    //}
-
-    //private fun encodeFreeAcceleration(bytes: ByteArray): String {
-    //    val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
-    //    val timestamp = buffer.int
-    //    val x = buffer.float
-    //    val y = buffer.float
-    //    val z = buffer.float
-    //    return "Timestamp: $timestamp, X: $x, Y: $y, Z: $z"
-    //}
 
     private fun appendToTextView(text: String) {
         runOnUiThread {
