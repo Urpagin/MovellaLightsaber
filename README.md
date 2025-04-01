@@ -2,7 +2,7 @@
 
 A very quick & dirty app that connects via bluetooth to a Movella sensor.
 
-When moving the sensor with enough velocity, a the sound of a lightsaber is played by the app.
+When moving the sensor with enough velocity, the sound of a lightsaber is played by the app.
 
 ## Quality
 
