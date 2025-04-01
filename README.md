@@ -1,9 +1,9 @@
 # Movella Lightsaber
 
-A very quick & dirty app that connects via bluetooth to a Movella sensor.
+A basic application that connects to a Movella sensor via Bluetooth.
 
-When moving the sensor with enough velocity, the sound of a lightsaber is played by the app.
+The app plays lightsaber sound effects when the sensor is moved rapidly.
 
-## Quality
+## Code Quality
 
-Terrible code-quality as I've never learnt Kotlin before. However, functional (except the myriads of bugs).
+The code quality is rudimentary due to limited Kotlin experience. The app is functional but contains several known issues.
